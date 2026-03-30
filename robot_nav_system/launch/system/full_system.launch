@@ -1,0 +1,31 @@
+<launch>
+  <!-- Full system launch for TurtleBot3 Gazebo simulation -->
+  <arg name="profile" default="turtlebot3_sim"/>
+  <arg name="num_robots" default="3"/>
+  <arg name="model" default="$(env TURTLEBOT3_MODEL)"/>
+
+  <!-- Layer 1: Gazebo world + robots -->
+  <include file="$(find robot_nav_system)/launch/bringup/gazebo_world.launch">
+    <arg name="num_robots" value="$(arg num_robots)"/>
+    <arg name="model" value="$(arg model)"/>
+  </include>
+
+  <!-- Layer 2: SLAM for each robot -->
+  <include file="$(find robot_nav_system)/launch/slam/multi_slam.launch">
+    <arg name="model" value="$(arg model)"/>
+  </include>
+
+  <!-- Layer 3: Navigation stack (move_base) -->
+  <include file="$(find robot_nav_system)/launch/navigation/multi_move_base.launch">
+    <arg name="model" value="$(arg model)"/>
+  </include>
+
+  <!-- Layer 4: DMROS semantic mapping -->
+  <include file="$(find robot_nav_system)/launch/perception/dmros.launch"/>
+
+  <!-- Layer 5: System orchestrator -->
+  <!-- NOTE: explore-lite is NOT included here; it is managed dynamically -->
+  <include file="$(find robot_nav_system)/launch/system/nav_agent_only.launch">
+    <arg name="profile" value="$(arg profile)"/>
+  </include>
+</launch>

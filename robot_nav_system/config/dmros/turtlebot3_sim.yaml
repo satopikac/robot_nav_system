@@ -1,0 +1,18 @@
+# DMROS ROS topic configuration for TurtleBot3 Gazebo simulation
+# These topics are subscribed by DMROS for semantic mapping
+
+ros_topics:
+  rgb_image: "/tb3_0/camera/rgb/image_raw"
+  depth_image: "/tb3_0/camera/depth/image_raw"
+  camera_info: "/tb3_0/camera/rgb/camera_info"
+  odom: "/tb3_0/odom"
+
+output:
+  map_save_path: "output/map"
+  semantic_save_path: "output/semantic"
+  save_interval: 5.0
+
+detection:
+  model: "yolov8"
+  confidence_threshold: 0.5
+  device: "cuda:0"

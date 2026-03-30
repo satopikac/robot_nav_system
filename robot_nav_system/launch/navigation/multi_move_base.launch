@@ -1,0 +1,75 @@
+<launch>
+  <arg name="model" default="$(env TURTLEBOT3_MODEL)"/>
+
+  <!-- move_base for tb3_0 -->
+  <group ns="tb3_0">
+    <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
+      <param name="base_local_planner" value="dwa_local_planner/DWAPlannerROS"/>
+      <rosparam file="$(find turtlebot3_navigation)/param/costmap_common_params_$(arg model).yaml"
+                command="load" ns="global_costmap"/>
+      <rosparam file="$(find turtlebot3_navigation)/param/costmap_common_params_$(arg model).yaml"
+                command="load" ns="local_costmap"/>
+      <rosparam file="$(find turtlebot3_navigation)/param/local_costmap_params.yaml" command="load"/>
+      <rosparam file="$(find turtlebot3_navigation)/param/global_costmap_params.yaml" command="load"/>
+      <rosparam file="$(find turtlebot3_navigation)/param/move_base_params.yaml" command="load"/>
+      <rosparam file="$(find turtlebot3_navigation)/param/dwa_local_planner_params_$(arg model).yaml"
+                command="load"/>
+
+      <param name="global_costmap/global_frame" value="tb3_0/map"/>
+      <param name="global_costmap/robot_base_frame" value="tb3_0/base_footprint"/>
+      <param name="local_costmap/global_frame" value="tb3_0/odom"/>
+      <param name="local_costmap/robot_base_frame" value="tb3_0/base_footprint"/>
+
+      <remap from="cmd_vel" to="cmd_vel"/>
+      <remap from="odom" to="odom"/>
+    </node>
+  </group>
+
+  <!-- move_base for tb3_1 -->
+  <group ns="tb3_1">
+    <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
+      <param name="base_local_planner" value="dwa_local_planner/DWAPlannerROS"/>
+      <rosparam file="$(find turtlebot3_navigation)/param/costmap_common_params_$(arg model).yaml"
+                command="load" ns="global_costmap"/>
+      <rosparam file="$(find turtlebot3_navigation)/param/costmap_common_params_$(arg model).yaml"
+                command="load" ns="local_costmap"/>
+      <rosparam file="$(find turtlebot3_navigation)/param/local_costmap_params.yaml" command="load"/>
+      <rosparam file="$(find turtlebot3_navigation)/param/global_costmap_params.yaml" command="load"/>
+      <rosparam file="$(find turtlebot3_navigation)/param/move_base_params.yaml" command="load"/>
+      <rosparam file="$(find turtlebot3_navigation)/param/dwa_local_planner_params_$(arg model).yaml"
+                command="load"/>
+
+      <param name="global_costmap/global_frame" value="tb3_1/map"/>
+      <param name="global_costmap/robot_base_frame" value="tb3_1/base_footprint"/>
+      <param name="local_costmap/global_frame" value="tb3_1/odom"/>
+      <param name="local_costmap/robot_base_frame" value="tb3_1/base_footprint"/>
+
+      <remap from="cmd_vel" to="cmd_vel"/>
+      <remap from="odom" to="odom"/>
+    </node>
+  </group>
+
+  <!-- move_base for tb3_2 -->
+  <group ns="tb3_2">
+    <node pkg="move_base" type="move_base" respawn="false" name="move_base" output="screen">
+      <param name="base_local_planner" value="dwa_local_planner/DWAPlannerROS"/>
+      <rosparam file="$(find turtlebot3_navigation)/param/costmap_common_params_$(arg model).yaml"
+                command="load" ns="global_costmap"/>
+      <rosparam file="$(find turtlebot3_navigation)/param/costmap_common_params_$(arg model).yaml"
+                command="load" ns="local_costmap"/>
+      <rosparam file="$(find turtlebot3_navigation)/param/local_costmap_params.yaml" command="load"/>
+      <rosparam file="$(find turtlebot3_navigation)/param/global_costmap_params.yaml" command="load"/>
+      <rosparam file="$(find turtlebot3_navigation)/param/move_base_params.yaml" command="load"/>
+      <rosparam file="$(find turtlebot3_navigation)/param/dwa_local_planner_params_$(arg model).yaml"
+                command="load"/>
+
+      <param name="global_costmap/global_frame" value="tb3_2/map"/>
+      <param name="global_costmap/robot_base_frame" value="tb3_2/base_footprint"/>
+      <param name="local_costmap/global_frame" value="tb3_2/odom"/>
+      <param name="local_costmap/robot_base_frame" value="tb3_2/base_footprint"/>
+
+      <remap from="cmd_vel" to="cmd_vel"/>
+      <remap from="odom" to="odom"/>
+    </node>
+  </group>
+</launch>

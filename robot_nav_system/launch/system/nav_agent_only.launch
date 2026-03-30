@@ -1,0 +1,9 @@
+<launch>
+  <!-- Navigation agent node only (assumes nav stack is running) -->
+  <arg name="profile" default="turtlebot3_sim"/>
+
+  <node pkg="robot_nav_system" type="system_orchestrator_node.py"
+        name="system_orchestrator" output="screen">
+    <param name="profile" value="$(arg profile)"/>
+  </node>
+</launch>

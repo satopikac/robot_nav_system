@@ -1,0 +1,52 @@
+{
+  "objects": [
+    {
+      "id": "coffee_machine_01",
+      "name": "咖啡机",
+      "aliases": [
+        "咖啡机台",
+        "coffee machine"
+      ],
+      "category": "电器",
+      "room": "茶水间",
+      "position": {
+        "x": 2.1,
+        "y": 5.4,
+        "yaw": 1.57
+      },
+      "description": "自动咖啡机"
+    },
+    {
+      "id": "sofa_01",
+      "name": "沙发",
+      "aliases": [
+        "沙发区",
+        "sofa"
+      ],
+      "category": "家具",
+      "room": "客厅",
+      "position": {
+        "x": -3.2,
+        "y": 1.5,
+        "yaw": 0.0
+      },
+      "description": "客厅沙发"
+    },
+    {
+      "id": "tv_table_01",
+      "name": "电视柜",
+      "aliases": [
+        "电视桌",
+        "TV table"
+      ],
+      "category": "家具",
+      "room": "客厅",
+      "position": {
+        "x": -2.4,
+        "y": 2.2,
+        "yaw": 0.5
+      },
+      "description": "电视柜台"
+    }
+  ]
+}

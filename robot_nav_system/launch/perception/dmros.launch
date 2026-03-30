@@ -1,0 +1,8 @@
+<launch>
+  <!-- DMROS semantic mapping node -->
+  <arg name="config" default="$(find robot_nav_system)/config/dmros/turtlebot3_sim.yaml"/>
+
+  <node pkg="robot_nav_system" type="dmros_bridge_node.py" name="dmros_bridge" output="screen">
+    <param name="dmros_config" value="$(arg config)"/>
+  </node>
+</launch>
