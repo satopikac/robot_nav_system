@@ -1,18 +1,57 @@
-# DMROS ROS topic configuration for TurtleBot3 Gazebo simulation
-# These topics are subscribed by DMROS for semantic mapping
+# DMROS ROS topic configuration for TurtleBot3 Gazebo multi-robot simulation
+#
+# In multi-robot mode, a separate DMROS instance is launched per robot.
+# Each instance subscribes to that robot's namespaced RGBD topics and
+# writes its semantic map to output/{robot_name}/semantic/semantic_map.json.
+#
+# The MultiRobotMapManager then merges all per-robot maps into a global map.
 
+# Per-robot topic templates (robot_name is substituted at launch time)
 ros_topics:
-  rgb_image: "/tb3_0/camera/rgb/image_raw"
-  depth_image: "/tb3_0/camera/depth/image_raw"
-  camera_info: "/tb3_0/camera/rgb/camera_info"
-  odom: "/tb3_0/odom"
+  rgb_image: "/{robot_name}/camera/rgb/image_raw"
+  depth_image: "/{robot_name}/camera/depth/image_raw"
+  camera_info: "/{robot_name}/camera/rgb/camera_info"
+  odom: "/{robot_name}/odom"
 
 output:
-  map_save_path: "output/map"
-  semantic_save_path: "output/semantic"
+  # Per-robot output: output/{robot_name}/semantic/semantic_map.json
+  base_path: "output"
+  semantic_subdir: "semantic"
   save_interval: 5.0
 
 detection:
   model: "yolov8"
   confidence_threshold: 0.5
   device: "cuda:0"
+
+# Concrete per-robot configs (generated from template)
+robots:
+  tb3_0:
+    ros_topics:
+      rgb_image: "/tb3_0/camera/rgb/image_raw"
+      depth_image: "/tb3_0/camera/depth/image_raw"
+      camera_info: "/tb3_0/camera/rgb/camera_info"
+      odom: "/tb3_0/odom"
+    output:
+      map_save_path: "output/tb3_0/map"
+      semantic_save_path: "output/tb3_0/semantic"
+
+  tb3_1:
+    ros_topics:
+      rgb_image: "/tb3_1/camera/rgb/image_raw"
+      depth_image: "/tb3_1/camera/depth/image_raw"
+      camera_info: "/tb3_1/camera/rgb/camera_info"
+      odom: "/tb3_1/odom"
+    output:
+      map_save_path: "output/tb3_1/map"
+      semantic_save_path: "output/tb3_1/semantic"
+
+  tb3_2:
+    ros_topics:
+      rgb_image: "/tb3_2/camera/rgb/image_raw"
+      depth_image: "/tb3_2/camera/depth/image_raw"
+      camera_info: "/tb3_2/camera/rgb/camera_info"
+      odom: "/tb3_2/odom"
+    output:
+      map_save_path: "output/tb3_2/map"
+      semantic_save_path: "output/tb3_2/semantic"

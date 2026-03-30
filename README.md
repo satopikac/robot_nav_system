@@ -10,6 +10,7 @@
 
 - [系统架构](#系统架构)
 - [核心特性](#核心特性)
+- [多机地图合并](#多机地图合并)
 - [项目结构](#项目结构)
 - [依赖环境](#依赖环境)
 - [安装](#安装)
@@ -75,6 +76,165 @@
 
 ---
 
+## 多机地图合并
+
+### 概述
+
+在多机模式（`ros_multi`）下，每台机器人独立进行探索和建图：
+
+- **几何地图**：每台机器人运行独立的 SLAM（gmapping），产生各自的 occupancy grid，由 `multirobot_map_merge` ROS 包实时合并为全局几何地图
+- **语义地图**：每台机器人运行独立的 DMROS 实例，处理各自的 RGBD 数据，产生各自的 `semantic_map.json`，由 `MultiRobotMapManager` 实时合并为全局语义地图
+
+### 架构
+
+```
+Robot_0                        Robot_1                        Robot_2
+  │                              │                              │
+  ├─ SLAM_0 ──┐                  ├─ SLAM_1 ──┐                  ├─ SLAM_2 ──┐
+  │           │                  │           │                  │           │
+  │     occupancy_grid_0         │     occupancy_grid_1         │     occupancy_grid_2
+  │           │                  │           │                  │           │
+  │           └────────────────> multirobot_map_merge <─────────┘           │
+  │                              │ (全局几何地图)                            │
+  │                              │                                          │
+  ├─ DMROS_0 ──┐                 ├─ DMROS_1 ──┐                 ├─ DMROS_2 ──┐
+  │            │                 │            │                 │            │
+  │  output/tb3_0/semantic/      │  output/tb3_1/semantic/      │  output/tb3_2/semantic/
+  │  semantic_map.json           │  semantic_map.json           │  semantic_map.json
+  │            │                 │            │                 │            │
+  │            └─────────────────┴────────────┴─────────────────┘            │
+  │                              │                                          │
+  │                   MultiRobotMapManager                                  │
+  │                     │                                                   │
+  │                     ├─ 轮询每台机器人的语义地图变化                        │
+  │                     ├─ SemanticMapMerger 去重合并                        │
+  │                     ├─ MapConverter 格式转换                             │
+  │                     └─ SemanticMap 热重载                               │
+  │                              │                                          │
+  │                   全局语义地图 (data/semantic_map.json)                   │
+  │                              │                                          │
+  └──────────────────> NavigationAgent <────────────────────────────────────┘
+```
+
+### 语义地图合并算法
+
+`SemanticMapMerger` 使用基于空间距离的去重策略：
+
+1. **收集**：加载所有机器人的本地语义地图
+2. **按类分组**：按 `class_name` 对物体分组
+3. **空间去重**：同类物体中，距离 ≤ `merge_distance`（默认 1.0m）的视为同一物理物体
+4. **位置融合**：合并后的物体位置取所有观测的加权平均
+   - x, y: 算术平均
+   - yaw: 圆周平均（`atan2(Σsin, Σcos)`）
+5. **包围盒选择**：取面积最大的观测包围盒
+6. **来源追踪**：记录每个合并物体的来源机器人列表和观测次数
+
+```
+示例：
+  tb3_0 观测到 chair 在 (3.0, 1.0)
+  tb3_1 观测到 chair 在 (3.1, 0.9)   距离 = 0.14m < 1.0m → 合并
+  tb3_2 观测到 chair 在 (10.0, 10.0) 距离 >> 1.0m → 视为不同椅子
+
+  合并结果:
+    chair_01: (3.05, 0.95), 观测 2 次, 来源 [tb3_0, tb3_1]
+    chair_02: (10.0, 10.0), 观测 1 次, 来源 [tb3_2]
+```
+
+### 配置
+
+在 `turtlebot3_sim.json` 中：
+
+```jsonc
+{
+  "dmros": {
+    "enabled": true,
+    "output_dir": "output",            // 基础输出目录
+                                       // 每台机器人输出到 output/{robot_name}/semantic/
+    "merge_distance": 1.0,             // 合并距离阈值 (米)
+    "poll_interval": 3.0,              // 轮询间隔 (秒)
+    "per_robot_topics": {              // 每台机器人的 RGBD 话题
+      "tb3_0": {
+        "rgb": "/tb3_0/camera/rgb/image_raw",
+        "depth": "/tb3_0/camera/depth/image_raw",
+        "odom": "/tb3_0/odom",
+        "camera_info": "/tb3_0/camera/rgb/camera_info"
+      },
+      "tb3_1": { ... },
+      "tb3_2": { ... }
+    }
+  }
+}
+```
+
+### 数据流
+
+```
+每台机器人的 RGBD 传感器
+    │
+    ▼ (命名空间隔离)
+/{robot}/camera/rgb/image_raw
+/{robot}/camera/depth/image_raw
+/{robot}/odom
+    │
+    ▼
+DMROS_{robot} (独立实例)
+    │
+    ▼
+output/{robot}/semantic/semantic_map.json (DMROS 格式, 每台独立)
+    │
+    ▼ (MultiRobotMapManager 后台轮询)
+    │
+    ├─ 检测任一机器人的地图文件变化
+    ├─ 加载所有机器人的最新地图
+    ├─ SemanticMapMerger.merge() 去重合并
+    ├─ 写入 output/merged/semantic_map.json (全局 DMROS 格式)
+    ├─ MapConverter.convert_fast() 格式转换
+    └─ SemanticMap.reload() 热重载
+    │
+    ▼
+data/semantic_map.json (全局 nav 格式, NavigationAgent 使用)
+```
+
+### 文件输出结构
+
+```
+output/
+├── tb3_0/
+│   ├── semantic/
+│   │   └── semantic_map.json       # tb3_0 的本地语义地图 (DMROS 格式)
+│   └── map/
+│       └── ...                     # tb3_0 的点云等 (DMROS 输出)
+├── tb3_1/
+│   └── semantic/
+│       └── semantic_map.json       # tb3_1 的本地语义地图
+├── tb3_2/
+│   └── semantic/
+│       └── semantic_map.json       # tb3_2 的本地语义地图
+└── merged/
+    └── semantic_map.json           # 合并后的全局语义地图 (DMROS 格式)
+                                    # 包含 metadata.source_robots, observation_count 等
+```
+
+### REPL 状态查看
+
+在多机模式下，`status` 命令会额外显示每台机器人的地图状态：
+
+```
+你> status
+
+  state: exploring
+  profile: turtlebot3_sim
+  runtime_mode: ros_multi
+  semantic_map_objects: 12
+  multi_robot_maps:
+    tb3_0: 5 objects
+    tb3_1: 4 objects
+    tb3_2: 6 objects
+  merge_count: 8
+```
+
+---
+
 ## 项目结构
 
 ```
@@ -106,7 +266,8 @@ robot_nav_system/
 │   │   │   ├── explore.launch             # 单机 explore-lite
 │   │   │   └── multi_explore.launch       # 多机 explore-lite
 │   │   ├── perception/
-│   │   │   └── dmros.launch               # DMROS 语义建图
+│   │   │   ├── dmros.launch               # 单机 DMROS 语义建图
+│   │   │   └── multi_dmros.launch         # 多机 DMROS（每机独立实例）
 │   │   └── system/
 │   │       ├── full_system.launch         # 完整系统一键启动
 │   │       └── nav_agent_only.launch      # 仅 Agent 节点
@@ -136,7 +297,9 @@ robot_nav_system/
 │   │   ├── perception/                    # 感知管线
 │   │   │   ├── semantic_map.py            #   语义地图（热重载 + 模糊匹配）
 │   │   │   ├── map_converter.py           #   DMROS → nav 格式转换
-│   │   │   └── map_watcher.py             #   文件监听器
+│   │   │   ├── map_watcher.py             #   文件监听器（单机模式）
+│   │   │   ├── map_merger.py              #   多机语义地图合并器
+│   │   │   └── multi_robot_map_manager.py #   多机地图管理器（轮询+合并+转换）
 │   │   ├── config/                        # 配置系统
 │   │   │   ├── config.py                  #   Config 类（Profile 加载）
 │   │   │   └── defaults.py                #   默认配置常量
@@ -693,6 +856,53 @@ run_instruction(instruction)
 3. 调用 `SemanticMap.reload()` 热重载
 
 采用轮询而非 inotify 的原因：DMROS 使用原子写入（临时文件 + rename），轮询方式更简单可靠。
+
+### perception/map_merger.py — 多机语义地图合并器
+
+`SemanticMapMerger` 负责将多台机器人的本地语义地图去重合并为全局地图：
+
+| 参数 | 默认值 | 说明 |
+|------|--------|------|
+| `merge_distance` | 1.0m | 同类物体视为同一物理实体的最大距离 |
+
+核心类 `ObjectCluster` 管理对同一物理物体的多次观测：
+- 动态合并新观测（距离检查）
+- 位置融合（算术平均 + 圆周平均角度）
+- 追踪来源机器人和观测次数
+
+### perception/multi_robot_map_manager.py — 多机地图管理器
+
+`MultiRobotMapManager` 是多机模式的核心感知组件，替代单机模式的 `MapWatcher`：
+
+```python
+MultiRobotMapManager(
+    robots=["tb3_0", "tb3_1", "tb3_2"],
+    base_output_dir=Path("output"),         # 每机器人: output/{robot}/semantic/
+    global_dmros_map_path=Path("output/merged/semantic_map.json"),
+    nav_map_path=Path("data/semantic_map.json"),
+    converter=MapConverter(...),
+    semantic_map=SemanticMap(...),
+    merge_distance=1.0,
+    poll_interval=3.0,
+)
+```
+
+后台线程工作流程：
+
+```
+每 3 秒轮询
+    │
+    ├─ 检查每台机器人的 semantic_map.json 修改时间
+    │   如果任一变化 →
+    │
+    ├─ 加载所有机器人的最新地图
+    ├─ SemanticMapMerger.merge() 去重合并
+    ├─ 写入 output/merged/semantic_map.json
+    ├─ MapConverter.convert_fast() → data/semantic_map.json
+    └─ SemanticMap.reload()
+```
+
+在 `ros_multi` 模式下，`SystemOrchestrator` 自动选择 `MultiRobotMapManager` 而非 `MapWatcher`。
 
 ---
 

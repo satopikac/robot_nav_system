@@ -20,8 +20,8 @@
     <arg name="model" value="$(arg model)"/>
   </include>
 
-  <!-- Layer 4: DMROS semantic mapping -->
-  <include file="$(find robot_nav_system)/launch/perception/dmros.launch"/>
+  <!-- Layer 4: DMROS semantic mapping (one instance per robot) -->
+  <include file="$(find robot_nav_system)/launch/perception/multi_dmros.launch"/>
 
   <!-- Layer 5: System orchestrator -->
   <!-- NOTE: explore-lite is NOT included here; it is managed dynamically -->

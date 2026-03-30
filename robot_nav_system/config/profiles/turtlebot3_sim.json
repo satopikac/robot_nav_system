@@ -29,10 +29,31 @@
 
   "dmros": {
     "enabled": true,
-    "output_dir": "output/semantic",
+    "output_dir": "output",
     "ros_stream_config": "config/dmros/turtlebot3_sim.yaml",
     "poll_interval": 3.0,
-    "use_llm_for_metadata": true
+    "use_llm_for_metadata": true,
+    "merge_distance": 1.0,
+    "per_robot_topics": {
+      "tb3_0": {
+        "rgb": "/tb3_0/camera/rgb/image_raw",
+        "depth": "/tb3_0/camera/depth/image_raw",
+        "odom": "/tb3_0/odom",
+        "camera_info": "/tb3_0/camera/rgb/camera_info"
+      },
+      "tb3_1": {
+        "rgb": "/tb3_1/camera/rgb/image_raw",
+        "depth": "/tb3_1/camera/depth/image_raw",
+        "odom": "/tb3_1/odom",
+        "camera_info": "/tb3_1/camera/rgb/camera_info"
+      },
+      "tb3_2": {
+        "rgb": "/tb3_2/camera/rgb/image_raw",
+        "depth": "/tb3_2/camera/depth/image_raw",
+        "odom": "/tb3_2/odom",
+        "camera_info": "/tb3_2/camera/rgb/camera_info"
+      }
+    }
   },
 
   "exploration": {

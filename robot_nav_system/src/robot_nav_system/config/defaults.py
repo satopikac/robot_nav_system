@@ -53,10 +53,12 @@ DEFAULT_CONFIG: Dict[str, Any] = {
 
     "dmros": {
         "enabled": False,
-        "output_dir": "output/semantic",
+        "output_dir": "output",
         "ros_stream_config": "",
         "poll_interval": 3.0,
         "use_llm_for_metadata": False,
+        "merge_distance": 1.0,          # meters, for multi-robot map deduplication
+        "per_robot_topics": {},          # {robot_name: {rgb, depth, odom, camera_info}}
     },
 
     "exploration": {

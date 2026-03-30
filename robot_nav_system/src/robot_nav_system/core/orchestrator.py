@@ -21,7 +21,7 @@ from ..exceptions import (
 from ..logging_setup import get_logger, setup_logging
 from ..navigation import build_navigator
 from ..navigation.base import BaseNavigator
-from ..perception import MapConverter, MapWatcher, SemanticMap
+from ..perception import MapConverter, MapWatcher, MultiRobotMapManager, SemanticMap
 from .mode_controller import ExploreController, TaskController
 from .state_machine import SystemState, SystemStateMachine
 
@@ -46,6 +46,7 @@ class SystemOrchestrator:
         self.agent: Optional[NavigationAgent] = None
         self.converter: Optional[MapConverter] = None
         self.watcher: Optional[MapWatcher] = None
+        self.multi_map_manager: Optional[MultiRobotMapManager] = None
         self.explore_ctrl: Optional[ExploreController] = None
         self.task_ctrl: Optional[TaskController] = None
 
@@ -85,15 +86,40 @@ class SystemOrchestrator:
         # 5. Build perception pipeline
         if self.config.get("dmros.enabled", False):
             self.converter = MapConverter(self.config)
-            dmros_output = Path(self.config.get("dmros.output_dir", "output/semantic")) / "semantic_map.json"
-            self.watcher = MapWatcher(
-                dmros_output_path=dmros_output,
-                nav_map_path=map_path,
-                converter=self.converter,
-                semantic_map=self.semantic_map,
-                poll_interval=float(self.config.get("dmros.poll_interval", 3.0)),
-            )
-            self.watcher.start()
+            runtime_mode = self.config.get("runtime.mode", "simulation")
+            robots = list(self.config.get("robots.names", []))
+
+            if runtime_mode == "ros_multi" and len(robots) > 1:
+                # Multi-robot: each robot has its own DMROS, merge into global map
+                base_output_dir = Path(self.config.get("dmros.output_dir", "output"))
+                global_dmros_path = base_output_dir / "merged" / "semantic_map.json"
+                merge_distance = float(self.config.get("dmros.merge_distance", 1.0))
+
+                self.multi_map_manager = MultiRobotMapManager(
+                    config=self.config,
+                    robots=robots,
+                    base_output_dir=base_output_dir,
+                    global_dmros_map_path=global_dmros_path,
+                    nav_map_path=map_path,
+                    converter=self.converter,
+                    semantic_map=self.semantic_map,
+                    merge_distance=merge_distance,
+                    poll_interval=float(self.config.get("dmros.poll_interval", 3.0)),
+                )
+                self.multi_map_manager.start()
+                log.info("Multi-robot map manager started (robots: %s, merge_dist: %.1fm)",
+                         robots, merge_distance)
+            else:
+                # Single-robot: watch one DMROS output
+                dmros_output = Path(self.config.get("dmros.output_dir", "output/semantic")) / "semantic_map.json"
+                self.watcher = MapWatcher(
+                    dmros_output_path=dmros_output,
+                    nav_map_path=map_path,
+                    converter=self.converter,
+                    semantic_map=self.semantic_map,
+                    poll_interval=float(self.config.get("dmros.poll_interval", 3.0)),
+                )
+                self.watcher.start()
 
         # 6. Build mode controllers
         self.explore_ctrl = ExploreController(self.config, self.navigator)
@@ -128,6 +154,9 @@ class SystemOrchestrator:
 
         if self.watcher:
             self.watcher.stop()
+
+        if self.multi_map_manager:
+            self.multi_map_manager.stop()
 
         if self.navigator:
             self.navigator.cancel_all_goals()
@@ -216,6 +245,13 @@ class SystemOrchestrator:
             "semantic_map_objects": len(self.semantic_map.objects) if self.semantic_map else 0,
             "semantic_map_version": self.semantic_map.version if self.semantic_map else 0,
         }
+        if self.multi_map_manager:
+            robot_status = self.multi_map_manager.get_robot_map_status()
+            status["multi_robot_maps"] = {
+                robot: {"objects": info["objects"], "exists": info["exists"]}
+                for robot, info in robot_status.items()
+            }
+            status["merge_count"] = self.multi_map_manager.merge_count
         if self.agent:
             status["agent_status"] = self.agent.task_manager.status_text(
                 runtime_mode=self.config.get("runtime.mode", "simulation")
