@@ -1,4 +1,4 @@
-dataset_name: 'realsense_d435i'
+dataset_name: 'lab_device'
 
 ros_topics:
   # RealSense D435i 默认话题名 (realsense2_camera 驱动)
@@ -22,10 +22,10 @@ depth_factor: 1000.0
 # 可通过 rostopic echo /camera/color/camera_info 获取精确值
 # 或者注释掉这段，系统会自动从 camera_info 话题读取
 intrinsic:
-  fx: 615.0
-  fy: 615.0
-  cx: 320.0
-  cy: 240.0
+  fx: 607.737060546875
+  fy: 607.473876953125
+  cx: 330.1333923339844
+  cy: 250.61337280273438
 
 # 外参：相机坐标系到机器人base_link的变换
 # 如果相机就装在机器人正前方且无旋转，用单位矩阵
@@ -36,3 +36,8 @@ intrinsic:
 #   - [r10, r11, r12, ty]
 #   - [r20, r21, r22, tz]
 #   - [0.0, 0.0, 0.0, 1.0]
+extrinsics:
+  - [0.0, 0.0, 1.0, 0.162]
+  - [-1.0, 0.0, 0.0, 0.015]
+  - [0.0, -1.0, 0.0, 0.195]
+  - [0.0, 0.0, 0.0, 1.0]

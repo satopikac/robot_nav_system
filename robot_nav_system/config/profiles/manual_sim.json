@@ -9,13 +9,15 @@
   },
 
   "robots": {
-    "names": ["robot_0"],
+    "names": ["robot_0","robot_1","robot_2"],
     "global_frame": "map",
     "base_frame_suffix": "base_footprint",
     "goal_timeout": 300.0,
     "server_timeout": 10.0,
     "default_positions": {
-      "robot_0": [0.0, 0.0]
+      "robot_0": [0.0, 0.0],
+      "robot_1": [0.0, 1.0],
+      "robot_2": [0.0, 2.0]
     }
   },
 
@@ -29,7 +31,7 @@
 
   "llm": {
     "base_url": "https://api.deepseek.com",
-    "api_key": "",
+    "api_key": "sk-9f0bd0e15bc047029951e1b2c4a519af",
     "model": "deepseek-chat",
     "temperature": 0.2,
     "max_tokens": 1024,

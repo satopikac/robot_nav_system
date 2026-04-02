@@ -171,28 +171,40 @@ class SemanticMapManager:
 
                 related_objects.append(related_entry)
 
+        # entry = {
+        #     "instance_id": str(obj.uid),
+        #     "class_name": class_name,
+        #     "class_id": int(obj.class_id) if obj.class_id is not None else -1,
+        #     "bbox_3d": {
+        #         "center": bbox_center_3d,
+        #         "extent": bbox_extent_3d,
+        #         "min_bound": bbox_min_3d,
+        #         "max_bound": bbox_max_3d,
+        #     },
+        #     "bbox_2d": {
+        #         "center": bbox_center_2d,
+        #         "extent": bbox_extent_2d,
+        #     },
+        #     "num_points_3d": num_points_3d,
+        #     "num_points_2d": num_points_2d,
+        #     "observed_num": obj.observed_num,
+        #     "is_nav_goal": obj.nav_goal,
+        #     "related_objects": related_objects,
+        #     "last_updated": datetime.now().isoformat(),
+        # }
         entry = {
-            "instance_id": str(obj.uid),
             "class_name": class_name,
-            "class_id": int(obj.class_id) if obj.class_id is not None else -1,
+            "bbox_2d": {
+                "center": bbox_center_2d,
+                "extent": bbox_extent_2d,
+            },
             "bbox_3d": {
                 "center": bbox_center_3d,
                 "extent": bbox_extent_3d,
                 "min_bound": bbox_min_3d,
                 "max_bound": bbox_max_3d,
             },
-            "bbox_2d": {
-                "center": bbox_center_2d,
-                "extent": bbox_extent_2d,
-            },
-            "num_points_3d": num_points_3d,
-            "num_points_2d": num_points_2d,
-            "observed_num": obj.observed_num,
-            "is_nav_goal": obj.nav_goal,
-            "related_objects": related_objects,
-            "last_updated": datetime.now().isoformat(),
         }
-
         return entry
 
     def _save_to_disk(self):

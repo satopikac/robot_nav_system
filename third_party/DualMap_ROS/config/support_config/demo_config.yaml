@@ -52,14 +52,14 @@ save_all_path: true
 # World axis rotation changing config
 # Setting RPY here to adjust the mapped results with XYZ axis
 # Origin
-world_roll: 0.0
-world_pitch: 0.0
-world_yaw: 0.0
+# world_roll: 0.0
+# world_pitch: 0.0
+# world_yaw: 0.0
 
 # lab device default adjustment
-# world_roll: 0.0
-# world_pitch: 20.0
-# world_yaw: 0.0
+world_roll: 0.0
+world_pitch: 20.0
+world_yaw: 0.0
 
 # long bottle keyborad
 # world_roll: 0.0

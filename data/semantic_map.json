@@ -47,6 +47,22 @@
         "yaw": 0.5
       },
       "description": "电视柜台"
+    },
+    {
+      "id": "cup_01",
+      "name": "杯子",
+      "aliases": [
+        "水杯",
+        "coffee cup"
+      ],
+      "category": "器具",
+      "room": "厨房",
+      "position": {
+        "x": -4,
+        "y": 1,
+        "yaw": 0.5
+      },
+      "description": "水杯"
     }
   ]
 }

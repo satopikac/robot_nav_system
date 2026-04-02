@@ -12,6 +12,7 @@ defaults:
 ros_rate: 15
 
 # Path to ROS topic configuration file
+#ros_stream_config_path: ./config/data_config/ros/realsense_d435i.yaml
 ros_stream_config_path: ./config/data_config/ros/realsense_d435i.yaml
 
 # If RGB & Depth topics are published as compressed image topics, set to true
@@ -33,7 +34,7 @@ run_detection: True
 visualize_detection: False
 
 # Use FastSAM for Open-Voca supplementation
-use_fastsam: False
+use_fastsam: true
 
 # Detection Refinement
 # skip refinement will be faster but less accurate
